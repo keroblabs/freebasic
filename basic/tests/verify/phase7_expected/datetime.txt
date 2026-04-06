@@ -1,0 +1,5 @@
+Date length: 10 
+Date format OK
+Time length: 8 
+Time format OK
+Timer in valid range

@@ -1,0 +1,3 @@
+Square(5) = 25 
+Factorial(6) = 720 
+Max(3, 7) = 7 

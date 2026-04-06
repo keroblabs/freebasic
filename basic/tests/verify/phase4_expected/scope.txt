@@ -1,0 +1,3 @@
+Inside TestShared, globalVar = 100 
+Global after TestShared: 200 
+n after TestByVal with parens: 42 

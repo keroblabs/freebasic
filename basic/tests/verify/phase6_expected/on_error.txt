@@ -1,0 +1,12 @@
+=== ON ERROR GOTO ===
+Before error
+Caught error 5 
+After RESUME NEXT
+=== RESUME to label ===
+Division error 11 
+Resumed at label
+=== RESUME retry ===
+Success: y = 1 
+=== ON ERROR GOTO 0 ===
+Error handling disabled
+Done

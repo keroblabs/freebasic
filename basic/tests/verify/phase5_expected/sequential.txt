@@ -1,0 +1,7 @@
+Hello, World!
+ 42 
+ 3.14 
+Alice 30 
+Free file: 1 
+Lines: 4 
+Done

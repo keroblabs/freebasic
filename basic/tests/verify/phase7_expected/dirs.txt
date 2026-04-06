@@ -1,0 +1,5 @@
+Directory created
+Changed into directory
+Changed back
+Directory removed
+Done

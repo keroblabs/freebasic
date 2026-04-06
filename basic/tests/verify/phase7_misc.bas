@@ -1,0 +1,14 @@
+REM Phase 7 Test: FRE, CLEAR, PEEK, POKE, DEF SEG stubs
+PRINT "FRE ="; FRE(0)
+x% = 42
+PRINT "Before CLEAR: x% ="; x%
+CLEAR
+PRINT "After CLEAR: x% ="; x%
+PRINT "PEEK(0) ="; PEEK(0)
+POKE 0, 255
+PRINT "POKE done"
+DEF SEG = &HB800
+PRINT "DEF SEG done"
+DEF SEG
+PRINT "DEF SEG reset"
+END

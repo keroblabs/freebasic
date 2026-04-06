@@ -1,0 +1,7 @@
+FRE = 655360 
+Before CLEAR: x% = 42 
+After CLEAR: x% = 0 
+PEEK(0) = 0 
+POKE done
+DEF SEG done
+DEF SEG reset

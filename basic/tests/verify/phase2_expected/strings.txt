@@ -1,0 +1,18 @@
+ 5 
+Hello
+World
+World
+Wor
+HELLO
+hello
+hello  
+  hello
+A
+ 65 
+ 42
+ 3.14 
+ 7 
+*****
+   X
+FF
+377

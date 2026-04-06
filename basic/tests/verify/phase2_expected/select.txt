@@ -1,0 +1,10 @@
+one
+two or three
+two or three
+four to six
+four to six
+four to six
+other: 7 
+other: 8 
+greater than eight
+greater than eight

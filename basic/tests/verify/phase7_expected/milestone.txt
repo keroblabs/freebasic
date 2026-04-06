@@ -1,0 +1,10 @@
+=== System Info ===
+Date length: 10 
+Time length: 8 
+Timer: valid
+
+FB_VERSION = 4.5
+Free memory: 655360 bytes
+
+Directory operations: OK
+=== Milestone passed ===

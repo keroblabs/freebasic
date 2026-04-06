@@ -1,0 +1,3 @@
+ 10  20  30 
+Hello World
+After restore: 10 
