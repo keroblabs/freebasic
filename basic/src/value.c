@@ -2,7 +2,7 @@
  * value.c — FBValue tagged union + FBString ref-counted strings
  */
 #include "value.h"
-#include "system_api.h"
+#include "platform.h"
 #include "error.h"
 #include <stdlib.h>
 #include <string.h>

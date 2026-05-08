@@ -2,7 +2,7 @@
  * udt.c — User-Defined Type registry and instance management
  */
 #include "udt.h"
-#include "system_api.h"
+#include "platform.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>

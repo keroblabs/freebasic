@@ -2,7 +2,7 @@
  * lexer.c — FBasic tokenizer
  */
 #include "lexer.h"
-#include "system_api.h"
+#include "platform.h"
 #include "error.h"
 #include <stdlib.h>
 #include <string.h>

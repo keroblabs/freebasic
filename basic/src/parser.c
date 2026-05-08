@@ -2,7 +2,7 @@
  * parser.c — Recursive descent parser for FBasic
  */
 #include "parser.h"
-#include "system_api.h"
+#include "platform.h"
 #include "error.h"
 #include <stdlib.h>
 #include <string.h>

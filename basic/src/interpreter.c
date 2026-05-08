@@ -17,8 +17,7 @@
 #include "array.h"
 #include "udt.h"
 #include "callframe.h"
-#include "system_api.h"
-#include "system_api.h"
+#include "platform.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -2987,7 +2986,7 @@ void interp_init(Interpreter* interp, Program* prog) {
     callstack_init(&interp->call_stack);
     udt_registry_init(&interp->udt_registry);
     fb_filetable_init(&interp->file_table, NULL);
-    interp->sys_ops = fb_sysops_default();
+    interp->sys_ops = fb_sysops_platform();
 }
 
 void interp_set_command_line(Interpreter* interp, int argc, char** argv) {

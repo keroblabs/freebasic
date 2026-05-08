@@ -3,7 +3,7 @@
  * Usage: fbasic <file.bas>
  */
 #include "fb.h"
-#include "system_api.h"
+#include "platform.h"
 #include "interpreter.h"
 #include <stdio.h>
 #include <stdlib.h>

@@ -2,37 +2,17 @@
  * fileio.h — Portable file I/O abstraction for FBasic interpreter
  *
  * This module provides a platform-independent file I/O API.  The default
- * implementation uses standard C stdio; swap fb_fileops_default() for an
+ * implementation uses standard C stdio; swap fb_fileops_platform() for an
  * alternative backend to port to other platforms.
  */
 #ifndef FILEIO_H
 #define FILEIO_H
 
 #include "value.h"
+#include "platform.h"
 #include <stddef.h>
 
 #define FB_MAX_FILES 255
-
-/* ---- Platform abstraction ---- */
-
-typedef struct FBFileOps {
-    void*  (*open)(const char* path, const char* mode);
-    int    (*close)(void* handle);
-    size_t (*read)(void* handle, void* buf, size_t size);
-    size_t (*write)(void* handle, const void* buf, size_t size);
-    int    (*seek)(void* handle, long offset, int whence);
-    long   (*tell)(void* handle);
-    int    (*eof)(void* handle);
-    int    (*flush)(void* handle);
-    int    (*getc)(void* handle);
-    int    (*putc)(int ch, void* handle);
-    int    (*remove)(const char* path);
-    int    (*rename)(const char* oldpath, const char* newpath);
-    long   (*length)(void* handle);
-} FBFileOps;
-
-/* Returns pointer to the default stdio-backed ops table. */
-const FBFileOps* fb_fileops_default(void);
 
 /* ---- File mode / access enums ---- */
 

@@ -2,7 +2,7 @@
  * builtins_str.c — String built-in functions for FBasic interpreter
  */
 #include "builtins_str.h"
-#include "system_api.h"
+#include "platform.h"
 #include "error.h"
 #include "value.h"
 #include <string.h>

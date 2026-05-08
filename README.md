@@ -125,7 +125,7 @@ freebasic/
 │   │   ├── udt.h               # User-defined type registry
 │   │   ├── callframe.h         # Call stack for SUB/FUNCTION
 │   │   ├── fileio.h            # File I/O abstraction layer
-│   │   ├── system_api.h        # System operations abstraction
+│   │   ├── platform.h        # System operations abstraction
 │   │   ├── console.h           # Terminal/console operations
 │   │   ├── builtins_str.h      # String built-in functions
 │   │   ├── builtins_math.h     # Math built-in functions

@@ -7,7 +7,7 @@
  *   Escape:   _ (literal next char)
  */
 #include "print_using.h"
-#include "system_api.h"
+#include "platform.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

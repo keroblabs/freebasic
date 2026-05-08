@@ -2,7 +2,7 @@
  * array.c — FBArray allocation, indexing, resize
  */
 #include "array.h"
-#include "system_api.h"
+#include "platform.h"
 #include "error.h"
 #include <stdlib.h>
 #include <string.h>

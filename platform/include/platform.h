@@ -1,18 +1,25 @@
-/*
- * system_api.h — Portable system-level abstraction for FBasic interpreter
- *
- * This module provides a platform-independent API for OS-level operations:
- * SHELL, ENVIRON, directory operations, date/time, console I/O, text output,
- * and low-level stubs.
- * The default implementation uses POSIX/Linux syscalls; swap
- * fb_sysops_default() for an alternative backend to port to other platforms.
- */
-#ifndef SYSTEM_API_H
-#define SYSTEM_API_H
+#ifndef PLATFORM_H
+#define PLATFORM_H
 
 #include <stddef.h>
 
-/* ---- Platform abstraction vtable ---- */
+/* ---- Platform abstraction ---- */
+
+typedef struct FBFileOps {
+    void*  (*open)(const char* path, const char* mode);
+    int    (*close)(void* handle);
+    size_t (*read)(void* handle, void* buf, size_t size);
+    size_t (*write)(void* handle, const void* buf, size_t size);
+    int    (*seek)(void* handle, long offset, int whence);
+    long   (*tell)(void* handle);
+    int    (*eof)(void* handle);
+    int    (*flush)(void* handle);
+    int    (*getc)(void* handle);
+    int    (*putc)(int ch, void* handle);
+    int    (*remove)(const char* path);
+    int    (*rename)(const char* oldpath, const char* newpath);
+    long   (*length)(void* handle);
+} FBFileOps;
 
 typedef struct FBSysOps {
     /* SHELL support */
@@ -64,13 +71,16 @@ typedef struct FBSysOps {
     void   (*poke)(long address, int value);     /* POKE addr, value */
 } FBSysOps;
 
+/* Returns pointer to the default stdio-backed ops table. */
+const FBFileOps* fb_fileops_platform(void);
+
 /* Returns pointer to the default platform-specific ops table. */
-const FBSysOps* fb_sysops_default(void);
+const FBSysOps* fb_sysops_platform(void);
 
 /* ---- Convenience macros for heap allocation via system API ---- */
-#define fb_malloc(size)          fb_sysops_default()->heap_alloc((size))
-#define fb_calloc(count, size)   fb_sysops_default()->heap_calloc((count), (size))
-#define fb_realloc(ptr, size)    fb_sysops_default()->heap_realloc((ptr), (size))
-#define fb_free(ptr)             fb_sysops_default()->heap_free((ptr))
+#define fb_malloc(size)          fb_sysops_platform()->heap_alloc((size))
+#define fb_calloc(count, size)   fb_sysops_platform()->heap_calloc((count), (size))
+#define fb_realloc(ptr, size)    fb_sysops_platform()->heap_realloc((ptr), (size))
+#define fb_free(ptr)             fb_sysops_platform()->heap_free((ptr))
 
-#endif /* SYSTEM_API_H */
+#endif

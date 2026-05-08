@@ -4,7 +4,7 @@
  * Provides SHELL, ENVIRON, directory, date/time, console I/O, text output,
  * and low-level stub operations.  Replace fb_sysops_default() for other platforms.
  */
-#include "system_api.h"
+#include "platform.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -291,6 +291,6 @@ static const FBSysOps linux_sysops = {
     .poke              = linux_poke,
 };
 
-const FBSysOps* fb_sysops_default(void) {
+const FBSysOps* fb_sysops_platform(void) {
     return &linux_sysops;
 }

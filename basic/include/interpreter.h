@@ -8,7 +8,7 @@
 #include "callframe.h"
 #include "udt.h"
 #include "fileio.h"
-#include "system_api.h"
+#include "platform.h"
 
 #define MAX_GOSUB_STACK 256
 #define MAX_FOR_STACK   64

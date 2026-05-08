@@ -2,7 +2,7 @@
  * symtable.c — Symbol table with scope chaining
  */
 #include "symtable.h"
-#include "system_api.h"
+#include "platform.h"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
