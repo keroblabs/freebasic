@@ -2,13 +2,14 @@
  * array.c — FBArray allocation, indexing, resize
  */
 #include "array.h"
+#include "system_api.h"
 #include "error.h"
 #include <stdlib.h>
 #include <string.h>
 
 FBArray* fbarray_new(FBType elem_type, int ndims, ArrayDim* dims,
                      int is_dynamic, int udt_type_id) {
-    FBArray* arr = calloc(1, sizeof(FBArray));
+    FBArray* arr = fb_calloc(1, sizeof(FBArray));
     arr->element_type = elem_type;
     arr->ndims = ndims;
     arr->is_dynamic = is_dynamic;
@@ -19,13 +20,13 @@ FBArray* fbarray_new(FBType elem_type, int ndims, ArrayDim* dims,
         arr->dims[d] = dims[d];
         int size = dims[d].upper - dims[d].lower + 1;
         if (size <= 0) {
-            free(arr);
+            fb_free(arr);
             return NULL;
         }
         arr->total_elements *= size;
     }
 
-    arr->data = calloc(arr->total_elements, sizeof(FBValue));
+    arr->data = fb_calloc(arr->total_elements, sizeof(FBValue));
 
     for (int i = 0; i < arr->total_elements; i++) {
         switch (elem_type) {
@@ -46,8 +47,8 @@ void fbarray_free(FBArray* arr) {
     for (int i = 0; i < arr->total_elements; i++) {
         fbval_release(&arr->data[i]);
     }
-    free(arr->data);
-    free(arr);
+    fb_free(arr->data);
+    fb_free(arr);
 }
 
 int fbarray_index(const FBArray* arr, const int* subscripts, int nsubs) {
@@ -91,7 +92,7 @@ int fbarray_redim(FBArray* arr, int ndims, ArrayDim* dims) {
     for (int i = 0; i < arr->total_elements; i++) {
         fbval_release(&arr->data[i]);
     }
-    free(arr->data);
+    fb_free(arr->data);
 
     arr->ndims = ndims;
     arr->total_elements = 1;
@@ -106,7 +107,7 @@ int fbarray_redim(FBArray* arr, int ndims, ArrayDim* dims) {
         arr->total_elements *= size;
     }
 
-    arr->data = calloc(arr->total_elements, sizeof(FBValue));
+    arr->data = fb_calloc(arr->total_elements, sizeof(FBValue));
     for (int i = 0; i < arr->total_elements; i++) {
         switch (arr->element_type) {
             case FB_INTEGER: arr->data[i] = fbval_int(0); break;

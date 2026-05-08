@@ -17,6 +17,8 @@
 #include "array.h"
 #include "udt.h"
 #include "callframe.h"
+#include "system_api.h"
+#include "system_api.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -655,7 +657,7 @@ static FBValue eval_builtin_func(Interpreter* interp, ASTNode* expr) {
             fb_error(FB_ERR_ILLEGAL_FUNC_CALL, expr->line, NULL);
             goto cleanup;
         }
-        char* buf = malloc(n + 1);
+        char* buf = fb_malloc(n + 1);
         for (int i = 0; i < n; i++) {
             int ch;
             do { ch = fgetc(stdin); } while (ch == EOF);
@@ -663,7 +665,7 @@ static FBValue eval_builtin_func(Interpreter* interp, ASTNode* expr) {
         }
         buf[n] = '\0';
         FBString* s = fbstr_new(buf, n);
-        free(buf);
+        fb_free(buf);
         result.type = FB_STRING;
         result.as.str = s;
         goto cleanup;
@@ -750,7 +752,7 @@ static FBValue eval_builtin_func(Interpreter* interp, ASTNode* expr) {
                 frame.param_count = actual_count;
                 frame.param_bindings = NULL;
                 if (actual_count > 0) {
-                    frame.param_bindings = calloc(actual_count, sizeof(ParamBinding));
+                    frame.param_bindings = fb_calloc(actual_count, sizeof(ParamBinding));
                 }
 
                 /* We already evaluated argv[] above, so for FUNCTION calls from
@@ -835,7 +837,7 @@ static FBValue eval_builtin_func(Interpreter* interp, ASTNode* expr) {
                 interp->current_scope = saved_scope;
                 callstack_pop(&interp->call_stack);
                 scope_free(func_scope);
-                free(frame.param_bindings);
+                fb_free(frame.param_bindings);
                 goto cleanup;
             }
         }
@@ -962,7 +964,7 @@ static void exec_print(Interpreter* interp, ASTNode* node) {
             char* text = fbval_format_print(&val);
             printf("%s", text);
             col += (int)strlen(text);
-            free(text);
+            fb_free(text);
             fbval_release(&val);
         }
 
@@ -1734,7 +1736,7 @@ static void exec_read(Interpreter* interp, ASTNode* node) {
             fbval_release(&data_val);
             fbval_release(target_ptr);
             *target_ptr = fbval_string_from_cstr(fmt);
-            free(fmt);
+            fb_free(fmt);
         } else if (target_type != FB_STRING && data_val.type == FB_STRING) {
             double v = data_val.as.str ? atof(data_val.as.str->data) : 0.0;
             FBValue numval = fbval_double(v);
@@ -1793,7 +1795,7 @@ static void exec_print_using_stmt(Interpreter* interp, ASTNode* node) {
         FBValue* values = NULL;
         int value_count = node->data.print_using.item_count;
         if (value_count > 0) {
-            values = malloc(value_count * sizeof(FBValue));
+            values = fb_malloc(value_count * sizeof(FBValue));
             for (int i = 0; i < value_count; i++)
                 values[i] = eval_expr(interp, node->data.print_using.items[i]);
         }
@@ -1801,11 +1803,11 @@ static void exec_print_using_stmt(Interpreter* interp, ASTNode* node) {
         char* result = format_print_using(fmt_val.as.str->data, values, value_count);
         if (result) {
             fb_file_write_bytes(&interp->file_table, f, result, strlen(result));
-            free(result);
+            fb_free(result);
         }
         fb_file_write_bytes(&interp->file_table, f, "\r\n", 2);
         for (int i = 0; i < value_count; i++) fbval_release(&values[i]);
-        free(values);
+        fb_free(values);
         fbval_release(&fmt_val);
         return;
     }
@@ -1819,7 +1821,7 @@ static void exec_print_using_stmt(Interpreter* interp, ASTNode* node) {
     FBValue* values = NULL;
     int value_count = node->data.print_using.item_count;
     if (value_count > 0) {
-        values = malloc(value_count * sizeof(FBValue));
+        values = fb_malloc(value_count * sizeof(FBValue));
         for (int i = 0; i < value_count; i++) {
             values[i] = eval_expr(interp, node->data.print_using.items[i]);
         }
@@ -1830,7 +1832,7 @@ static void exec_print_using_stmt(Interpreter* interp, ASTNode* node) {
     for (int i = 0; i < value_count; i++) {
         fbval_release(&values[i]);
     }
-    free(values);
+    fb_free(values);
     fbval_release(&fmt_val);
     fflush(stdout);
 }
@@ -1941,7 +1943,7 @@ static void exec_call(Interpreter* interp, ASTNode* node) {
     frame.param_count = pcount < argc ? pcount : argc;
     frame.param_bindings = NULL;
     if (frame.param_count > 0) {
-        frame.param_bindings = calloc(frame.param_count, sizeof(ParamBinding));
+        frame.param_bindings = fb_calloc(frame.param_count, sizeof(ParamBinding));
     }
 
     for (int i = 0; i < frame.param_count; i++) {
@@ -2020,7 +2022,7 @@ static void exec_call(Interpreter* interp, ASTNode* node) {
     interp->current_scope = saved_scope;
     callstack_pop(&interp->call_stack);
     scope_free(sub_scope);
-    free(frame.param_bindings);
+    fb_free(frame.param_bindings);
 }
 
 /* ---- DEF FN ---- */
@@ -2028,7 +2030,7 @@ static void exec_def_fn(Interpreter* interp, ASTNode* node) {
     /* Register the DEF FN for later use */
     if (interp->def_fn_count >= interp->def_fn_cap) {
         interp->def_fn_cap = interp->def_fn_cap ? interp->def_fn_cap * 2 : 16;
-        interp->def_fns = realloc(interp->def_fns,
+        interp->def_fns = fb_realloc(interp->def_fns,
             interp->def_fn_cap * sizeof(interp->def_fns[0]));
     }
     strncpy(interp->def_fns[interp->def_fn_count].name,
@@ -2240,7 +2242,7 @@ static void exec_print_to_file(Interpreter* interp, ASTNode* node, int filenum) 
             FBValue val = eval_expr(interp, item);
             char* text = fbval_format_print(&val);
             file_print_str(ft, f, text);
-            free(text);
+            fb_free(text);
             fbval_release(&val);
         }
 
@@ -2536,11 +2538,11 @@ static void exec_get_file(Interpreter* interp, ASTNode* node) {
                 case FB_STRING: {
                     int len = sym->value.as.str ? sym->value.as.str->len : 0;
                     if (len > 0) {
-                        char* buf = malloc(len);
+                        char* buf = fb_malloc(len);
                         fb_file_read_bytes(ft, f, buf, len);
                         fbval_release(&sym->value);
                         sym->value = fbval_string(fbstr_new(buf, len));
-                        free(buf);
+                        fb_free(buf);
                     }
                     break;
                 }
@@ -2715,9 +2717,9 @@ static void exec_field_stmt(Interpreter* interp, ASTNode* node) {
     }
 
     /* Free previous FIELD mapping */
-    free(f->field_map);
+    fb_free(f->field_map);
     f->field_count = node->data.field.field_count;
-    f->field_map = calloc(f->field_count, sizeof(*f->field_map));
+    f->field_map = fb_calloc(f->field_count, sizeof(*f->field_map));
 
     int offset = 0;
     for (int i = 0; i < f->field_count; i++) {
@@ -2992,7 +2994,7 @@ void interp_set_command_line(Interpreter* interp, int argc, char** argv) {
     size_t total = 0;
     for (int i = 2; i < argc; i++)   /* skip program name (argv[0]) and .bas file (argv[1]) */
         total += strlen(argv[i]) + 1;
-    interp->command_line = malloc(total + 1);
+    interp->command_line = fb_malloc(total + 1);
     interp->command_line[0] = '\0';
     for (int i = 2; i < argc; i++) {
         if (i > 2) strcat(interp->command_line, " ");
@@ -3049,8 +3051,8 @@ void interp_run(Interpreter* interp) {
 void interp_free(Interpreter* interp) {
     fb_filetable_close_all(&interp->file_table);
     scope_free(interp->global_scope);
-    free(interp->def_fns);
-    free(interp->command_line);
+    fb_free(interp->def_fns);
+    fb_free(interp->command_line);
     interp->global_scope = NULL;
     interp->current_scope = NULL;
 }

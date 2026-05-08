@@ -2,6 +2,7 @@
  * fileio.c — Standard-IO-backed implementation of the portable file I/O API
  */
 #include "fileio.h"
+#include "system_api.h"
 #include "error.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,7 +152,7 @@ int fb_file_open(FBFileTable* ft, int filenum, const char* filename,
     f->record_buffer = NULL;
 
     if (mode == FMODE_RANDOM) {
-        f->record_buffer = calloc(1, f->reclen);
+        f->record_buffer = fb_calloc(1, f->reclen);
     }
 
     return 0;
@@ -166,10 +167,10 @@ void fb_file_close(FBFileTable* ft, int filenum) {
     f->handle  = NULL;
     f->is_open = 0;
     f->mode    = FMODE_CLOSED;
-    free(f->field_map);
+    fb_free(f->field_map);
     f->field_map   = NULL;
     f->field_count = 0;
-    free(f->record_buffer);
+    fb_free(f->record_buffer);
     f->record_buffer = NULL;
 }
 

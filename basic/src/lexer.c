@@ -2,6 +2,7 @@
  * lexer.c — FBasic tokenizer
  */
 #include "lexer.h"
+#include "system_api.h"
 #include "error.h"
 #include <stdlib.h>
 #include <string.h>
@@ -135,7 +136,7 @@ static char lexer_advance(Lexer* lex) {
 static void lexer_emit(Lexer* lex, Token tok) {
     if (lex->token_count >= lex->token_cap) {
         lex->token_cap = lex->token_cap ? lex->token_cap * 2 : 256;
-        lex->tokens = realloc(lex->tokens, lex->token_cap * sizeof(Token));
+        lex->tokens = fb_realloc(lex->tokens, lex->token_cap * sizeof(Token));
     }
     lex->tokens[lex->token_count++] = tok;
 }
@@ -745,7 +746,7 @@ int lexer_tokenize(Lexer* lex) {
             if (at_start) {
                 lex->tokens[i].kind = TOK_LABEL;
                 /* Remove the colon token by shifting */
-                free(lex->tokens[i + 1].value.str.text); /* might be NULL, that's ok */
+                fb_free(lex->tokens[i + 1].value.str.text); /* might be NULL, that's ok */
                 for (int j = i + 1; j < lex->token_count - 1; j++) {
                     lex->tokens[j] = lex->tokens[j + 1];
                 }
@@ -763,10 +764,10 @@ void lexer_free(Lexer* lex) {
         if (k == TOK_STRING_LIT || k == TOK_LABEL ||
             (k >= TOK_IDENT && k <= TOK_IDENT_DOUBLE) ||
             (k >= TOK_KW_ABS && k < TOK_LINENO)) {
-            free(lex->tokens[i].value.str.text);
+            fb_free(lex->tokens[i].value.str.text);
         }
     }
-    free(lex->tokens);
+    fb_free(lex->tokens);
     lex->tokens = NULL;
     lex->token_count = 0;
     lex->token_cap = 0;

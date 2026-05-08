@@ -3,6 +3,7 @@
  * Usage: fbasic <file.bas>
  */
 #include "fb.h"
+#include "system_api.h"
 #include "interpreter.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +43,7 @@ int main(int argc, char* argv[]) {
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
-    char* source = malloc(fsize + 1);
+    char* source = fb_malloc(fsize + 1);
     if (!source) {
         fprintf(stderr, "Out of memory\n");
         fclose(f);
@@ -57,14 +58,14 @@ int main(int argc, char* argv[]) {
     lexer_init(&lex, source, (int)fsize);
     if (lexer_tokenize(&lex) != 0) {
         fprintf(stderr, "Lexer failed.\n");
-        free(source);
+        fb_free(source);
         return 1;
     }
 
     if (lex_only) {
         lexer_dump(&lex);
         lexer_free(&lex);
-        free(source);
+        fb_free(source);
         return 0;
     }
 
@@ -74,7 +75,7 @@ int main(int argc, char* argv[]) {
     if (parser_parse(lex.tokens, lex.token_count, &prog) != 0) {
         fprintf(stderr, "Parser failed.\n");
         lexer_free(&lex);
-        free(source);
+        fb_free(source);
         return 1;
     }
 
@@ -83,7 +84,7 @@ int main(int argc, char* argv[]) {
                prog.stmt_count, prog.label_count, prog.linemap_count, prog.data_count);
         program_free(&prog);
         lexer_free(&lex);
-        free(source);
+        fb_free(source);
         return 0;
     }
 
@@ -97,7 +98,7 @@ int main(int argc, char* argv[]) {
     interp_free(&interp);
     program_free(&prog);
     lexer_free(&lex);
-    free(source);
+    fb_free(source);
 
     return 0;
 }

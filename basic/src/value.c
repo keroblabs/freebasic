@@ -2,6 +2,7 @@
  * value.c — FBValue tagged union + FBString ref-counted strings
  */
 #include "value.h"
+#include "system_api.h"
 #include "error.h"
 #include <stdlib.h>
 #include <string.h>
@@ -11,10 +12,10 @@
 /* --- FBString --- */
 
 FBString* fbstr_new(const char* text, int32_t len) {
-    FBString* s = malloc(sizeof(FBString));
+    FBString* s = fb_malloc(sizeof(FBString));
     s->len = len;
     s->capacity = len + 1;
-    s->data = malloc(s->capacity);
+    s->data = fb_malloc(s->capacity);
     if (text && len > 0)
         memcpy(s->data, text, len);
     s->data[len] = '\0';
@@ -34,8 +35,8 @@ void fbstr_unref(FBString* s) {
     if (!s) return;
     s->refcount--;
     if (s->refcount <= 0) {
-        free(s->data);
-        free(s);
+        fb_free(s->data);
+        fb_free(s);
     }
 }
 
@@ -50,10 +51,10 @@ FBString* fbstr_cow(FBString* s) {
 
 FBString* fbstr_concat(const FBString* a, const FBString* b) {
     int32_t new_len = a->len + b->len;
-    FBString* s = malloc(sizeof(FBString));
+    FBString* s = fb_malloc(sizeof(FBString));
     s->len = new_len;
     s->capacity = new_len + 1;
-    s->data = malloc(s->capacity);
+    s->data = fb_malloc(s->capacity);
     if (a->len > 0) memcpy(s->data, a->data, a->len);
     if (b->len > 0) memcpy(s->data + a->len, b->data, b->len);
     s->data[new_len] = '\0';

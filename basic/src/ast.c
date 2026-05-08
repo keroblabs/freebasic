@@ -2,11 +2,12 @@
  * ast.c — AST node constructors + free
  */
 #include "ast.h"
+#include "system_api.h"
 #include <stdlib.h>
 #include <string.h>
 
 static ASTNode* ast_alloc(ASTKind kind, int line) {
-    ASTNode* node = calloc(1, sizeof(ASTNode));
+    ASTNode* node = fb_calloc(1, sizeof(ASTNode));
     node->kind = kind;
     node->line = line;
     return node;
@@ -154,7 +155,7 @@ void ast_free(ASTNode* node) {
         case AST_FUNC_CALL:
             for (int i = 0; i < node->data.func_call.arg_count; i++)
                 ast_free(node->data.func_call.args[i]);
-            free(node->data.func_call.args);
+            fb_free(node->data.func_call.args);
             break;
         case AST_PAREN:
             ast_free(node->data.paren.expr);
@@ -162,7 +163,7 @@ void ast_free(ASTNode* node) {
         case AST_ARRAY_ACCESS:
             for (int i = 0; i < node->data.array_access.nsubs; i++)
                 ast_free(node->data.array_access.subscripts[i]);
-            free(node->data.array_access.subscripts);
+            fb_free(node->data.array_access.subscripts);
             break;
         case AST_UDT_MEMBER:
             ast_free(node->data.udt_member.base);
@@ -170,8 +171,8 @@ void ast_free(ASTNode* node) {
         case AST_PRINT:
             for (int i = 0; i < node->data.print.item_count; i++)
                 ast_free(node->data.print.items[i]);
-            free(node->data.print.items);
-            free(node->data.print.separators);
+            fb_free(node->data.print.items);
+            fb_free(node->data.print.separators);
             break;
         case AST_LET:
             ast_free(node->data.let.target);
@@ -181,19 +182,19 @@ void ast_free(ASTNode* node) {
             ast_free(node->data.if_block.condition);
             for (int i = 0; i < node->data.if_block.then_count; i++)
                 ast_free(node->data.if_block.then_body[i]);
-            free(node->data.if_block.then_body);
+            fb_free(node->data.if_block.then_body);
             for (int i = 0; i < node->data.if_block.elseif_n; i++) {
                 ast_free(node->data.if_block.elseif_cond[i]);
                 for (int j = 0; j < node->data.if_block.elseif_count[i]; j++)
                     ast_free(node->data.if_block.elseif_body[i][j]);
-                free(node->data.if_block.elseif_body[i]);
+                fb_free(node->data.if_block.elseif_body[i]);
             }
-            free(node->data.if_block.elseif_cond);
-            free(node->data.if_block.elseif_body);
-            free(node->data.if_block.elseif_count);
+            fb_free(node->data.if_block.elseif_cond);
+            fb_free(node->data.if_block.elseif_body);
+            fb_free(node->data.if_block.elseif_count);
             for (int i = 0; i < node->data.if_block.else_count; i++)
                 ast_free(node->data.if_block.else_body[i]);
-            free(node->data.if_block.else_body);
+            fb_free(node->data.if_block.else_body);
             break;
         case AST_FOR:
             ast_free(node->data.for_loop.var);
@@ -202,20 +203,20 @@ void ast_free(ASTNode* node) {
             ast_free(node->data.for_loop.step);
             for (int i = 0; i < node->data.for_loop.body_count; i++)
                 ast_free(node->data.for_loop.body[i]);
-            free(node->data.for_loop.body);
+            fb_free(node->data.for_loop.body);
             break;
         case AST_WHILE:
         case AST_DO_LOOP:
             ast_free(node->data.loop.condition);
             for (int i = 0; i < node->data.loop.body_count; i++)
                 ast_free(node->data.loop.body[i]);
-            free(node->data.loop.body);
+            fb_free(node->data.loop.body);
             break;
         case AST_DIM:
         case AST_REDIM:
             for (int i = 0; i < node->data.dim.ndims * 2; i++)
                 if (node->data.dim.bounds) ast_free(node->data.dim.bounds[i]);
-            free(node->data.dim.bounds);
+            fb_free(node->data.dim.bounds);
             break;
         case AST_CONST_DECL:
             ast_free(node->data.const_decl.value_expr);
@@ -225,7 +226,7 @@ void ast_free(ASTNode* node) {
             ast_free(node->data.input.prompt);
             for (int i = 0; i < node->data.input.var_count; i++)
                 ast_free(node->data.input.vars[i]);
-            free(node->data.input.vars);
+            fb_free(node->data.input.vars);
             break;
         case AST_SELECT_CASE:
             ast_free(node->data.select_case.test_expr);
@@ -234,23 +235,23 @@ void ast_free(ASTNode* node) {
                     ast_free(node->data.select_case.cases[i].values[j]);
                     ast_free(node->data.select_case.cases[i].range_ends[j]);
                 }
-                free(node->data.select_case.cases[i].values);
-                free(node->data.select_case.cases[i].kinds);
-                free(node->data.select_case.cases[i].relops);
-                free(node->data.select_case.cases[i].range_ends);
+                fb_free(node->data.select_case.cases[i].values);
+                fb_free(node->data.select_case.cases[i].kinds);
+                fb_free(node->data.select_case.cases[i].relops);
+                fb_free(node->data.select_case.cases[i].range_ends);
                 for (int j = 0; j < node->data.select_case.cases[i].body_count; j++)
                     ast_free(node->data.select_case.cases[i].body[j]);
-                free(node->data.select_case.cases[i].body);
+                fb_free(node->data.select_case.cases[i].body);
             }
-            free(node->data.select_case.cases);
+            fb_free(node->data.select_case.cases);
             for (int i = 0; i < node->data.select_case.else_count; i++)
                 ast_free(node->data.select_case.else_body[i]);
-            free(node->data.select_case.else_body);
+            fb_free(node->data.select_case.else_body);
             break;
         case AST_WRITE_STMT:
             for (int i = 0; i < node->data.write_stmt.item_count; i++)
                 ast_free(node->data.write_stmt.items[i]);
-            free(node->data.write_stmt.items);
+            fb_free(node->data.write_stmt.items);
             break;
         case AST_LOCATE:
             ast_free(node->data.locate.row);
@@ -264,17 +265,17 @@ void ast_free(ASTNode* node) {
             ast_free(node->data.print_using.format_expr);
             for (int i = 0; i < node->data.print_using.item_count; i++)
                 ast_free(node->data.print_using.items[i]);
-            free(node->data.print_using.items);
+            fb_free(node->data.print_using.items);
             break;
         case AST_DATA:
             for (int i = 0; i < node->data.data.value_count; i++)
                 fbval_release(&node->data.data.values[i]);
-            free(node->data.data.values);
+            fb_free(node->data.data.values);
             break;
         case AST_READ:
             for (int i = 0; i < node->data.read_stmt.var_count; i++)
                 ast_free(node->data.read_stmt.vars[i]);
-            free(node->data.read_stmt.vars);
+            fb_free(node->data.read_stmt.vars);
             break;
         case AST_SWAP:
             ast_free(node->data.swap.a);
@@ -283,30 +284,30 @@ void ast_free(ASTNode* node) {
         case AST_ON_GOTO:
         case AST_ON_GOSUB:
             ast_free(node->data.on_branch.expr);
-            free(node->data.on_branch.labels);
-            free(node->data.on_branch.linenos);
+            fb_free(node->data.on_branch.labels);
+            fb_free(node->data.on_branch.linenos);
             break;
         case AST_SUB_DEF:
         case AST_FUNCTION_DEF:
-            free(node->data.proc_def.params);
+            fb_free(node->data.proc_def.params);
             for (int i = 0; i < node->data.proc_def.body_count; i++)
                 ast_free(node->data.proc_def.body[i]);
-            free(node->data.proc_def.body);
+            fb_free(node->data.proc_def.body);
             break;
         case AST_CALL:
             for (int i = 0; i < node->data.call.arg_count; i++)
                 ast_free(node->data.call.args[i]);
-            free(node->data.call.args);
+            fb_free(node->data.call.args);
             break;
         case AST_DECLARE:
-            free(node->data.declare.params);
+            fb_free(node->data.declare.params);
             break;
         case AST_DEF_FN:
-            free(node->data.def_fn.params);
+            fb_free(node->data.def_fn.params);
             ast_free(node->data.def_fn.body_expr);
             for (int i = 0; i < node->data.def_fn.body_count; i++)
                 ast_free(node->data.def_fn.body[i]);
-            free(node->data.def_fn.body);
+            fb_free(node->data.def_fn.body);
             break;
         case AST_OPEN:
             ast_free(node->data.open.filename);
@@ -314,7 +315,7 @@ void ast_free(ASTNode* node) {
             ast_free(node->data.open.reclen);
             break;
         case AST_CLOSE:
-            free(node->data.close.filenums);
+            fb_free(node->data.close.filenums);
             break;
         case AST_GET_FILE:
         case AST_PUT_FILE:
@@ -372,28 +373,28 @@ void ast_free(ASTNode* node) {
             break;
         case AST_SHARED_STMT:
         case AST_STATIC_STMT:
-            free(node->data.shared_stmt.names);
-            free(node->data.shared_stmt.types);
+            fb_free(node->data.shared_stmt.names);
+            fb_free(node->data.shared_stmt.types);
             break;
         case AST_ERASE:
-            free(node->data.erase.names);
+            fb_free(node->data.erase.names);
             break;
         case AST_TYPE_DEF:
             for (int i = 0; i < node->data.type_def.field_count; i++) {
                 for (int j = 0; j < node->data.type_def.fields[i].ndims * 2; j++)
                     ast_free(node->data.type_def.fields[i].bounds[j]);
-                free(node->data.type_def.fields[i].bounds);
+                fb_free(node->data.type_def.fields[i].bounds);
             }
-            free(node->data.type_def.fields);
+            fb_free(node->data.type_def.fields);
             break;
         case AST_FIELD_STMT:
             ast_free(node->data.field.filenum);
-            free(node->data.field.fields);
+            fb_free(node->data.field.fields);
             break;
         case AST_COMMON:
-            free(node->data.common.names);
-            free(node->data.common.types);
-            free(node->data.common.is_array);
+            fb_free(node->data.common.names);
+            fb_free(node->data.common.types);
+            fb_free(node->data.common.is_array);
             break;
         case AST_LOCK_STMT:
         case AST_UNLOCK_STMT:
@@ -462,5 +463,5 @@ void ast_free(ASTNode* node) {
             break;
     }
 
-    free(node);
+    fb_free(node);
 }

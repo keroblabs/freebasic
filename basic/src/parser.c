@@ -2,6 +2,7 @@
  * parser.c — Recursive descent parser for FBasic
  */
 #include "parser.h"
+#include "system_api.h"
 #include "error.h"
 #include <stdlib.h>
 #include <string.h>
@@ -272,7 +273,7 @@ static ASTNode* parse_primary(Parser* p) {
                 ASTNode* arg = parse_expression(p);
                 if (arg_count >= arg_cap) {
                     arg_cap = arg_cap ? arg_cap * 2 : 4;
-                    args = realloc(args, arg_cap * sizeof(ASTNode*));
+                    args = fb_realloc(args, arg_cap * sizeof(ASTNode*));
                 }
                 args[arg_count++] = arg;
             } while (match(p, TOK_COMMA));
@@ -298,7 +299,7 @@ static ASTNode* parse_primary(Parser* p) {
                     ASTNode* arg = parse_expression(p);
                     if (arg_count >= arg_cap) {
                         arg_cap = arg_cap ? arg_cap * 2 : 4;
-                        args = realloc(args, arg_cap * sizeof(ASTNode*));
+                        args = fb_realloc(args, arg_cap * sizeof(ASTNode*));
                     }
                     args[arg_count++] = arg;
                 } while (match(p, TOK_COMMA));
@@ -307,7 +308,7 @@ static ASTNode* parse_primary(Parser* p) {
 
             /* We'll create this as an array access; the interpreter
                will check if it's actually a function call */
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_ARRAY_ACCESS;
             n->line = id_tok->line;
             strncpy(n->data.array_access.name, id_tok->value.str.text,
@@ -324,7 +325,7 @@ static ASTNode* parse_primary(Parser* p) {
                     fb_syntax_error(field->line, field->col, "Expected field name after '.'");
                 }
                 const Token* ft = advance(p);
-                ASTNode* udt = calloc(1, sizeof(ASTNode));
+                ASTNode* udt = fb_calloc(1, sizeof(ASTNode));
                 udt->kind = AST_UDT_MEMBER;
                 udt->line = ft->line;
                 udt->data.udt_member.base = var;
@@ -344,7 +345,7 @@ static ASTNode* parse_primary(Parser* p) {
                 fb_syntax_error(field->line, field->col, "Expected field name after '.'");
             }
             const Token* ft = advance(p);
-            ASTNode* udt = calloc(1, sizeof(ASTNode));
+            ASTNode* udt = fb_calloc(1, sizeof(ASTNode));
             udt->kind = AST_UDT_MEMBER;
             udt->line = ft->line;
             udt->data.udt_member.base = var;
@@ -448,14 +449,14 @@ static ASTNode* parse_print(Parser* p) {
             ASTNode* item = parse_expression(p);
             if (item_count >= item_cap) {
                 item_cap = item_cap ? item_cap * 2 : 4;
-                items = realloc(items, item_cap * sizeof(ASTNode*));
+                items = fb_realloc(items, item_cap * sizeof(ASTNode*));
             }
             items[item_count++] = item;
             if (!match(p, TOK_SEMICOLON) && !match(p, TOK_COMMA))
                 break;
         }
 
-        ASTNode* n = calloc(1, sizeof(ASTNode));
+        ASTNode* n = fb_calloc(1, sizeof(ASTNode));
         n->kind = AST_PRINT_USING;
         n->line = line;
         n->data.print_using.format_expr = format_expr;
@@ -478,14 +479,14 @@ static ASTNode* parse_print(Parser* p) {
             expect(p, TOK_LPAREN);
             ASTNode* arg = parse_expression(p);
             expect(p, TOK_RPAREN);
-            ASTNode** args = malloc(sizeof(ASTNode*));
+            ASTNode** args = fb_malloc(sizeof(ASTNode*));
             args[0] = arg;
             ASTNode* fc = ast_func_call(func_tok->line, func_tok->value.str.text, args, 1);
 
             if (count >= cap) {
                 cap = cap ? cap * 2 : 8;
-                items = realloc(items, cap * sizeof(ASTNode*));
-                seps = realloc(seps, cap * sizeof(int));
+                items = fb_realloc(items, cap * sizeof(ASTNode*));
+                seps = fb_realloc(seps, cap * sizeof(int));
             }
             items[count] = fc;
             seps[count] = 0;
@@ -500,8 +501,8 @@ static ASTNode* parse_print(Parser* p) {
         ASTNode* item = parse_expression(p);
         if (count >= cap) {
             cap = cap ? cap * 2 : 8;
-            items = realloc(items, cap * sizeof(ASTNode*));
-            seps = realloc(seps, cap * sizeof(int));
+            items = fb_realloc(items, cap * sizeof(ASTNode*));
+            seps = fb_realloc(seps, cap * sizeof(int));
         }
         items[count] = item;
         seps[count] = 0;
@@ -547,7 +548,7 @@ static ASTNode* parse_if(Parser* p) {
             if (stmt) {
                 if (then_count >= then_cap) {
                     then_cap = then_cap ? then_cap * 2 : 8;
-                    then_body = realloc(then_body, then_cap * sizeof(ASTNode*));
+                    then_body = fb_realloc(then_body, then_cap * sizeof(ASTNode*));
                 }
                 then_body[then_count++] = stmt;
             }
@@ -577,7 +578,7 @@ static ASTNode* parse_if(Parser* p) {
                 if (stmt) {
                     if (ebc >= ebc_cap) {
                         ebc_cap = ebc_cap ? ebc_cap * 2 : 8;
-                        eibody = realloc(eibody, ebc_cap * sizeof(ASTNode*));
+                        eibody = fb_realloc(eibody, ebc_cap * sizeof(ASTNode*));
                     }
                     eibody[ebc++] = stmt;
                 }
@@ -587,9 +588,9 @@ static ASTNode* parse_if(Parser* p) {
 
             if (elseif_n >= elseif_cap) {
                 elseif_cap = elseif_cap ? elseif_cap * 2 : 4;
-                elseif_cond = realloc(elseif_cond, elseif_cap * sizeof(ASTNode*));
-                elseif_body = realloc(elseif_body, elseif_cap * sizeof(ASTNode**));
-                elseif_count = realloc(elseif_count, elseif_cap * sizeof(int));
+                elseif_cond = fb_realloc(elseif_cond, elseif_cap * sizeof(ASTNode*));
+                elseif_body = fb_realloc(elseif_body, elseif_cap * sizeof(ASTNode**));
+                elseif_count = fb_realloc(elseif_count, elseif_cap * sizeof(int));
             }
             elseif_cond[elseif_n] = eicond;
             elseif_body[elseif_n] = eibody;
@@ -611,7 +612,7 @@ static ASTNode* parse_if(Parser* p) {
                 if (stmt) {
                     if (else_count >= else_cap) {
                         else_cap = else_cap ? else_cap * 2 : 8;
-                        else_body = realloc(else_body, else_cap * sizeof(ASTNode*));
+                        else_body = fb_realloc(else_body, else_cap * sizeof(ASTNode*));
                     }
                     else_body[else_count++] = stmt;
                 }
@@ -624,7 +625,7 @@ static ASTNode* parse_if(Parser* p) {
         expect(p, TOK_KW_END);
         expect(p, TOK_KW_IF);
 
-        ASTNode* n = calloc(1, sizeof(ASTNode));
+        ASTNode* n = fb_calloc(1, sizeof(ASTNode));
         n->kind = AST_IF;
         n->line = line;
         n->data.if_block.condition = condition;
@@ -649,7 +650,7 @@ static ASTNode* parse_if(Parser* p) {
             const Token* lt = advance(p);
             int32_t ln = (lt->kind == TOK_INTEGER_LIT) ? lt->value.int_val : lt->value.long_val;
             ASTNode* g = ast_goto(line, NULL, ln);
-            then_body = malloc(sizeof(ASTNode*));
+            then_body = fb_malloc(sizeof(ASTNode*));
             then_body[0] = g;
             then_count = 1;
         } else {
@@ -658,7 +659,7 @@ static ASTNode* parse_if(Parser* p) {
                 if (stmt) {
                     if (then_count >= then_cap) {
                         then_cap = then_cap ? then_cap * 2 : 4;
-                        then_body = realloc(then_body, then_cap * sizeof(ASTNode*));
+                        then_body = fb_realloc(then_body, then_cap * sizeof(ASTNode*));
                     }
                     then_body[then_count++] = stmt;
                 }
@@ -680,7 +681,7 @@ static ASTNode* parse_if(Parser* p) {
                 const Token* lt = advance(p);
                 int32_t ln = (lt->kind == TOK_INTEGER_LIT) ? lt->value.int_val : lt->value.long_val;
                 ASTNode* g = ast_goto(line, NULL, ln);
-                else_body = malloc(sizeof(ASTNode*));
+                else_body = fb_malloc(sizeof(ASTNode*));
                 else_body[0] = g;
                 else_count = 1;
             } else {
@@ -689,7 +690,7 @@ static ASTNode* parse_if(Parser* p) {
                     if (stmt) {
                         if (else_count >= else_cap) {
                             else_cap = else_cap ? else_cap * 2 : 4;
-                            else_body = realloc(else_body, else_cap * sizeof(ASTNode*));
+                            else_body = fb_realloc(else_body, else_cap * sizeof(ASTNode*));
                         }
                         else_body[else_count++] = stmt;
                     }
@@ -699,7 +700,7 @@ static ASTNode* parse_if(Parser* p) {
             }
         }
 
-        ASTNode* n = calloc(1, sizeof(ASTNode));
+        ASTNode* n = fb_calloc(1, sizeof(ASTNode));
         n->kind = AST_IF;
         n->line = line;
         n->data.if_block.condition = condition;
@@ -742,7 +743,7 @@ static ASTNode* parse_for(Parser* p) {
         if (stmt) {
             if (body_count >= body_cap) {
                 body_cap = body_cap ? body_cap * 2 : 8;
-                body = realloc(body, body_cap * sizeof(ASTNode*));
+                body = fb_realloc(body, body_cap * sizeof(ASTNode*));
             }
             body[body_count++] = stmt;
         }
@@ -779,7 +780,7 @@ static ASTNode* parse_while(Parser* p) {
         if (stmt) {
             if (body_count >= body_cap) {
                 body_cap = body_cap ? body_cap * 2 : 8;
-                body = realloc(body, body_cap * sizeof(ASTNode*));
+                body = fb_realloc(body, body_cap * sizeof(ASTNode*));
             }
             body[body_count++] = stmt;
         }
@@ -789,7 +790,7 @@ static ASTNode* parse_while(Parser* p) {
 
     expect(p, TOK_KW_WEND);
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_WHILE;
     n->line = line;
     n->data.loop.condition = condition;
@@ -830,7 +831,7 @@ static ASTNode* parse_do_loop(Parser* p) {
         if (stmt) {
             if (body_count >= body_cap) {
                 body_cap = body_cap ? body_cap * 2 : 8;
-                body = realloc(body, body_cap * sizeof(ASTNode*));
+                body = fb_realloc(body, body_cap * sizeof(ASTNode*));
             }
             body[body_count++] = stmt;
         }
@@ -856,7 +857,7 @@ static ASTNode* parse_do_loop(Parser* p) {
         /* If still no condition, it's an infinite loop (DO...LOOP) */
     }
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_DO_LOOP;
     n->line = line;
     n->data.loop.condition = condition;
@@ -875,7 +876,7 @@ static ASTNode* parse_select_case(Parser* p) {
     ASTNode* test_expr = parse_expression(p);
     skip_eol(p);
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_SELECT_CASE;
     n->line = line;
     n->data.select_case.test_expr = test_expr;
@@ -901,7 +902,7 @@ static ASTNode* parse_select_case(Parser* p) {
                 if (stmt) {
                     if (ec >= ec_cap) {
                         ec_cap = ec_cap ? ec_cap * 2 : 4;
-                        eb = realloc(eb, ec_cap * sizeof(ASTNode*));
+                        eb = fb_realloc(eb, ec_cap * sizeof(ASTNode*));
                     }
                     eb[ec++] = stmt;
                 }
@@ -916,7 +917,7 @@ static ASTNode* parse_select_case(Parser* p) {
         /* Parse case values */
         if (n->data.select_case.case_count >= case_cap) {
             case_cap = case_cap ? case_cap * 2 : 4;
-            n->data.select_case.cases = realloc(n->data.select_case.cases,
+            n->data.select_case.cases = fb_realloc(n->data.select_case.cases,
                 case_cap * sizeof(n->data.select_case.cases[0]));
         }
         int ci = n->data.select_case.case_count;
@@ -932,10 +933,10 @@ static ASTNode* parse_select_case(Parser* p) {
         do {
             if (vc >= vc_cap) {
                 vc_cap = vc_cap ? vc_cap * 2 : 4;
-                vals = realloc(vals, vc_cap * sizeof(ASTNode*));
-                kinds = realloc(kinds, vc_cap * sizeof(int));
-                relops = realloc(relops, vc_cap * sizeof(TokenKind));
-                range_ends = realloc(range_ends, vc_cap * sizeof(ASTNode*));
+                vals = fb_realloc(vals, vc_cap * sizeof(ASTNode*));
+                kinds = fb_realloc(kinds, vc_cap * sizeof(int));
+                relops = fb_realloc(relops, vc_cap * sizeof(TokenKind));
+                range_ends = fb_realloc(range_ends, vc_cap * sizeof(ASTNode*));
             }
             range_ends[vc] = NULL;
             relops[vc] = TOK_EQ;
@@ -979,7 +980,7 @@ static ASTNode* parse_select_case(Parser* p) {
             if (stmt) {
                 if (bc >= bc_cap) {
                     bc_cap = bc_cap ? bc_cap * 2 : 4;
-                    cb = realloc(cb, bc_cap * sizeof(ASTNode*));
+                    cb = fb_realloc(cb, bc_cap * sizeof(ASTNode*));
                 }
                 cb[bc++] = stmt;
             }
@@ -1015,7 +1016,7 @@ static ASTNode* parse_dim(Parser* p, int is_redim) {
         }
         const Token* nt = advance(p);
 
-        ASTNode* n = calloc(1, sizeof(ASTNode));
+        ASTNode* n = fb_calloc(1, sizeof(ASTNode));
         n->kind = is_redim ? AST_REDIM : AST_DIM;
         n->line = line;
         strncpy(n->data.dim.name, nt->value.str.text, sizeof(n->data.dim.name) - 1);
@@ -1050,7 +1051,7 @@ static ASTNode* parse_dim(Parser* p, int is_redim) {
 
                     if (ndims * 2 + 1 >= bounds_cap) {
                         bounds_cap = (bounds_cap + 2) * 2;
-                        bounds = realloc(bounds, bounds_cap * sizeof(ASTNode*));
+                        bounds = fb_realloc(bounds, bounds_cap * sizeof(ASTNode*));
                     }
                     bounds[ndims * 2] = lower;
                     bounds[ndims * 2 + 1] = upper;
@@ -1076,7 +1077,7 @@ static ASTNode* parse_dim(Parser* p, int is_redim) {
         /* Add to program statements */
         if (p->prog->stmt_count >= p->prog->stmt_cap) {
             p->prog->stmt_cap = p->prog->stmt_cap ? p->prog->stmt_cap * 2 : 64;
-            p->prog->statements = realloc(p->prog->statements,
+            p->prog->statements = fb_realloc(p->prog->statements,
                 p->prog->stmt_cap * sizeof(ASTNode*));
         }
         p->prog->statements[p->prog->stmt_count++] = n;
@@ -1100,7 +1101,7 @@ static ASTNode* parse_const(Parser* p) {
         expect(p, TOK_EQ);
         ASTNode* value_expr = parse_expression(p);
 
-        ASTNode* n = calloc(1, sizeof(ASTNode));
+        ASTNode* n = fb_calloc(1, sizeof(ASTNode));
         n->kind = AST_CONST_DECL;
         n->line = line;
         strncpy(n->data.const_decl.name, nt->value.str.text,
@@ -1109,7 +1110,7 @@ static ASTNode* parse_const(Parser* p) {
 
         if (p->prog->stmt_count >= p->prog->stmt_cap) {
             p->prog->stmt_cap = p->prog->stmt_cap ? p->prog->stmt_cap * 2 : 64;
-            p->prog->statements = realloc(p->prog->statements,
+            p->prog->statements = fb_realloc(p->prog->statements,
                 p->prog->stmt_cap * sizeof(ASTNode*));
         }
         p->prog->statements[p->prog->stmt_count++] = n;
@@ -1168,12 +1169,12 @@ static ASTNode* parse_input(Parser* p) {
         ASTNode* var = parse_lvalue(p);
         if (var_count >= var_cap) {
             var_cap = var_cap ? var_cap * 2 : 4;
-            vars = realloc(vars, var_cap * sizeof(ASTNode*));
+            vars = fb_realloc(vars, var_cap * sizeof(ASTNode*));
         }
         vars[var_count++] = var;
     } while (match(p, TOK_COMMA));
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = is_line_input ? AST_LINE_INPUT : AST_INPUT;
     n->line = line;
     n->data.input.prompt = prompt;
@@ -1223,7 +1224,7 @@ static ASTNode* parse_deftype(Parser* p) {
             range_end = range_start;
         }
 
-        ASTNode* n = calloc(1, sizeof(ASTNode));
+        ASTNode* n = fb_calloc(1, sizeof(ASTNode));
         n->kind = AST_DEFTYPE;
         n->line = line;
         n->data.deftype.type = type;
@@ -1232,7 +1233,7 @@ static ASTNode* parse_deftype(Parser* p) {
 
         if (p->prog->stmt_count >= p->prog->stmt_cap) {
             p->prog->stmt_cap = p->prog->stmt_cap ? p->prog->stmt_cap * 2 : 64;
-            p->prog->statements = realloc(p->prog->statements,
+            p->prog->statements = fb_realloc(p->prog->statements,
                 p->prog->stmt_cap * sizeof(ASTNode*));
         }
         p->prog->statements[p->prog->stmt_count++] = n;
@@ -1253,7 +1254,7 @@ static ASTNode* parse_sub_def(Parser* p) {
 
     int is_static = 0;
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_SUB_DEF;
     n->line = line;
     strncpy(n->data.proc_def.name, nt->value.str.text, sizeof(n->data.proc_def.name) - 1);
@@ -1292,7 +1293,7 @@ static ASTNode* parse_sub_def(Parser* p) {
 
                 if (n->data.proc_def.param_count >= pcap) {
                     pcap = pcap ? pcap * 2 : 4;
-                    n->data.proc_def.params = realloc(n->data.proc_def.params,
+                    n->data.proc_def.params = fb_realloc(n->data.proc_def.params,
                         pcap * sizeof(n->data.proc_def.params[0]));
                 }
                 int pi = n->data.proc_def.param_count++;
@@ -1324,7 +1325,7 @@ static ASTNode* parse_sub_def(Parser* p) {
         if (stmt) {
             if (body_count >= body_cap) {
                 body_cap = body_cap ? body_cap * 2 : 8;
-                body = realloc(body, body_cap * sizeof(ASTNode*));
+                body = fb_realloc(body, body_cap * sizeof(ASTNode*));
             }
             body[body_count++] = stmt;
         }
@@ -1350,7 +1351,7 @@ static ASTNode* parse_function_def(Parser* p) {
     }
     const Token* nt = advance(p);
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_FUNCTION_DEF;
     n->line = line;
     strncpy(n->data.proc_def.name, nt->value.str.text, sizeof(n->data.proc_def.name) - 1);
@@ -1379,7 +1380,7 @@ static ASTNode* parse_function_def(Parser* p) {
 
                 if (n->data.proc_def.param_count >= pcap) {
                     pcap = pcap ? pcap * 2 : 4;
-                    n->data.proc_def.params = realloc(n->data.proc_def.params,
+                    n->data.proc_def.params = fb_realloc(n->data.proc_def.params,
                         pcap * sizeof(n->data.proc_def.params[0]));
                 }
                 int pi = n->data.proc_def.param_count++;
@@ -1411,7 +1412,7 @@ static ASTNode* parse_function_def(Parser* p) {
         if (stmt) {
             if (body_count >= body_cap) {
                 body_cap = body_cap ? body_cap * 2 : 8;
-                body = realloc(body, body_cap * sizeof(ASTNode*));
+                body = fb_realloc(body, body_cap * sizeof(ASTNode*));
             }
             body[body_count++] = stmt;
         }
@@ -1441,7 +1442,7 @@ static ASTNode* parse_declare(Parser* p) {
     }
     advance(p);
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_DECLARE;
     n->line = line;
     n->data.declare.is_function = is_function;
@@ -1470,7 +1471,7 @@ static ASTNode* parse_declare(Parser* p) {
 
                 if (n->data.declare.param_count >= pcap) {
                     pcap = pcap ? pcap * 2 : 4;
-                    n->data.declare.params = realloc(n->data.declare.params,
+                    n->data.declare.params = fb_realloc(n->data.declare.params,
                         pcap * sizeof(n->data.declare.params[0]));
                 }
                 int pi = n->data.declare.param_count++;
@@ -1497,7 +1498,7 @@ static ASTNode* parse_type_def(Parser* p) {
     advance(p);
     skip_eol(p);
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_TYPE_DEF;
     n->line = line;
     strncpy(n->data.type_def.name, nt->value.str.text, sizeof(n->data.type_def.name) - 1);
@@ -1516,7 +1517,7 @@ static ASTNode* parse_type_def(Parser* p) {
 
         if (n->data.type_def.field_count >= fcap) {
             fcap = fcap ? fcap * 2 : 8;
-            n->data.type_def.fields = realloc(n->data.type_def.fields,
+            n->data.type_def.fields = fb_realloc(n->data.type_def.fields,
                 fcap * sizeof(n->data.type_def.fields[0]));
         }
         int fi = n->data.type_def.field_count++;
@@ -1546,7 +1547,7 @@ static ASTNode* parse_open(Parser* p) {
     int line = peek(p)->line;
     advance(p); /* consume OPEN */
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_OPEN;
     n->line = line;
     n->data.open.reclen = NULL;
@@ -1621,7 +1622,7 @@ static ASTNode* parse_close(Parser* p) {
     int line = peek(p)->line;
     advance(p); /* consume CLOSE */
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_CLOSE;
     n->line = line;
     n->data.close.filenums = NULL;
@@ -1648,7 +1649,7 @@ static ASTNode* parse_close(Parser* p) {
 
         if (n->data.close.filenum_count >= cap) {
             cap = cap ? cap * 2 : 4;
-            n->data.close.filenums = realloc(n->data.close.filenums, cap * sizeof(int));
+            n->data.close.filenums = fb_realloc(n->data.close.filenums, cap * sizeof(int));
         }
         n->data.close.filenums[n->data.close.filenum_count++] = fnum;
     } while (match(p, TOK_COMMA));
@@ -1660,7 +1661,7 @@ static ASTNode* parse_data(Parser* p) {
     int line = peek(p)->line;
     advance(p); /* consume DATA */
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_DATA;
     n->line = line;
     n->data.data.values = NULL;
@@ -1717,7 +1718,7 @@ static ASTNode* parse_data(Parser* p) {
 
         if (n->data.data.value_count >= cap) {
             cap = cap ? cap * 2 : 4;
-            n->data.data.values = realloc(n->data.data.values, cap * sizeof(FBValue));
+            n->data.data.values = fb_realloc(n->data.data.values, cap * sizeof(FBValue));
         }
         n->data.data.values[n->data.data.value_count++] = val;
     } while (match(p, TOK_COMMA));
@@ -1729,7 +1730,7 @@ static ASTNode* parse_read(Parser* p) {
     int line = peek(p)->line;
     advance(p); /* consume READ */
 
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = AST_READ;
     n->line = line;
 
@@ -1741,7 +1742,7 @@ static ASTNode* parse_read(Parser* p) {
         ASTNode* var = parse_lvalue(p);
         if (count >= cap) {
             cap = cap ? cap * 2 : 4;
-            vars = realloc(vars, cap * sizeof(ASTNode*));
+            vars = fb_realloc(vars, cap * sizeof(ASTNode*));
         }
         vars[count++] = var;
     } while (match(p, TOK_COMMA));
@@ -1772,7 +1773,7 @@ static ASTNode* parse_statement(Parser* p) {
         /* Register in line_map */
         if (p->prog->linemap_count >= p->prog->linemap_cap) {
             p->prog->linemap_cap = p->prog->linemap_cap ? p->prog->linemap_cap * 2 : 32;
-            p->prog->line_map = realloc(p->prog->line_map,
+            p->prog->line_map = fb_realloc(p->prog->line_map,
                 p->prog->linemap_cap * sizeof(p->prog->line_map[0]));
         }
         p->prog->line_map[p->prog->linemap_count].lineno = lineno;
@@ -1797,7 +1798,7 @@ static ASTNode* parse_statement(Parser* p) {
         /* Register in label table */
         if (p->prog->label_count >= p->prog->label_cap) {
             p->prog->label_cap = p->prog->label_cap ? p->prog->label_cap * 2 : 32;
-            p->prog->labels = realloc(p->prog->labels,
+            p->prog->labels = fb_realloc(p->prog->labels,
                 p->prog->label_cap * sizeof(p->prog->labels[0]));
         }
         strncpy(p->prog->labels[p->prog->label_count].name, label, 41);
@@ -1943,7 +1944,7 @@ static ASTNode* parse_statement(Parser* p) {
                 if (at(p, TOK_INTEGER_LIT)) { filenum = peek(p)->value.int_val; advance(p); }
                 expect(p, TOK_COMMA);
             }
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_WRITE_STMT;
             n->line = line2;
             n->data.write_stmt.filenum = filenum;
@@ -1954,7 +1955,7 @@ static ASTNode* parse_statement(Parser* p) {
                 ASTNode* item = parse_expression(p);
                 if (n->data.write_stmt.item_count >= cap2) {
                     cap2 = cap2 ? cap2 * 2 : 4;
-                    n->data.write_stmt.items = realloc(n->data.write_stmt.items,
+                    n->data.write_stmt.items = fb_realloc(n->data.write_stmt.items,
                         cap2 * sizeof(ASTNode*));
                 }
                 n->data.write_stmt.items[n->data.write_stmt.item_count++] = item;
@@ -1974,7 +1975,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_LOCATE: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_LOCATE;
             n->line = line2;
             n->data.locate.row = NULL;
@@ -1993,7 +1994,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_COLOR: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_COLOR;
             n->line = line2;
             n->data.color.fg = NULL;
@@ -2016,7 +2017,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_RESTORE: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_RESTORE;
             n->line = line2;
             n->data.restore.label[0] = '\0';
@@ -2040,7 +2041,7 @@ static ASTNode* parse_statement(Parser* p) {
             ASTNode* a = parse_lvalue(p);
             expect(p, TOK_COMMA);
             ASTNode* b = parse_lvalue(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_SWAP;
             n->line = line2;
             n->data.swap.a = a;
@@ -2051,7 +2052,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_ERASE: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_ERASE;
             n->line = line2;
             int cap2 = 0;
@@ -2063,7 +2064,7 @@ static ASTNode* parse_statement(Parser* p) {
                 advance(p);
                 if (n->data.erase.name_count >= cap2) {
                     cap2 = cap2 ? cap2 * 2 : 4;
-                    n->data.erase.names = realloc(n->data.erase.names, cap2 * 42);
+                    n->data.erase.names = fb_realloc(n->data.erase.names, cap2 * 42);
                 }
                 strncpy(n->data.erase.names[n->data.erase.name_count], nt2->value.str.text, 41);
                 n->data.erase.name_count++;
@@ -2076,7 +2077,7 @@ static ASTNode* parse_statement(Parser* p) {
             advance(p);
             expect(p, TOK_KW_BASE);
             const Token* b = expect(p, TOK_INTEGER_LIT);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_OPTION_BASE;
             n->line = line2;
             n->data.option_base.base = b->value.int_val;
@@ -2116,7 +2117,7 @@ static ASTNode* parse_statement(Parser* p) {
                 fb_syntax_error(nt2->line, nt2->col, "Expected SUB name after CALL");
             }
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_CALL;
             n->line = line2;
             strncpy(n->data.call.name, nt2->value.str.text, sizeof(n->data.call.name) - 1);
@@ -2129,7 +2130,7 @@ static ASTNode* parse_statement(Parser* p) {
                         ASTNode* arg = parse_expression(p);
                         if (n->data.call.arg_count >= cap2) {
                             cap2 = cap2 ? cap2 * 2 : 4;
-                            n->data.call.args = realloc(n->data.call.args,
+                            n->data.call.args = fb_realloc(n->data.call.args,
                                 cap2 * sizeof(ASTNode*));
                         }
                         n->data.call.args[n->data.call.arg_count++] = arg;
@@ -2148,7 +2149,7 @@ static ASTNode* parse_statement(Parser* p) {
 
         case TOK_KW_RESET: {
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_RESET;
             n->line = t->line;
             return n;
@@ -2161,7 +2162,7 @@ static ASTNode* parse_statement(Parser* p) {
             if (at(p, TOK_KW_ERROR)) {
                 advance(p);
                 expect(p, TOK_KW_GOTO);
-                ASTNode* n = calloc(1, sizeof(ASTNode));
+                ASTNode* n = fb_calloc(1, sizeof(ASTNode));
                 n->kind = AST_ON_ERROR;
                 n->line = line2;
                 n->data.on_error.label[0] = '\0';
@@ -2186,7 +2187,7 @@ static ASTNode* parse_statement(Parser* p) {
                 ASTNode* key_expr = parse_expression(p);
                 expect(p, TOK_RPAREN);
                 expect(p, TOK_KW_GOSUB);
-                ASTNode* n = calloc(1, sizeof(ASTNode));
+                ASTNode* n = fb_calloc(1, sizeof(ASTNode));
                 n->kind = AST_ON_KEY;
                 n->line = line2;
                 n->data.on_event.key_id = (int)fbval_to_long(&key_expr->data.literal.value);
@@ -2207,7 +2208,7 @@ static ASTNode* parse_statement(Parser* p) {
                 ASTNode* interval = parse_expression(p);
                 expect(p, TOK_RPAREN);
                 expect(p, TOK_KW_GOSUB);
-                ASTNode* n = calloc(1, sizeof(ASTNode));
+                ASTNode* n = fb_calloc(1, sizeof(ASTNode));
                 n->kind = AST_ON_TIMER;
                 n->line = line2;
                 n->data.on_event.interval = fbval_to_double(&interval->data.literal.value);
@@ -2228,7 +2229,7 @@ static ASTNode* parse_statement(Parser* p) {
             if (match(p, TOK_KW_GOTO)) is_goto = 1;
             else expect(p, TOK_KW_GOSUB);
 
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = is_goto ? AST_ON_GOTO : AST_ON_GOSUB;
             n->line = line2;
             n->data.on_branch.expr = expr;
@@ -2239,8 +2240,8 @@ static ASTNode* parse_statement(Parser* p) {
             do {
                 if (n->data.on_branch.label_count >= lcap) {
                     lcap = lcap ? lcap * 2 : 4;
-                    n->data.on_branch.labels = realloc(n->data.on_branch.labels, lcap * 42);
-                    n->data.on_branch.linenos = realloc(n->data.on_branch.linenos, lcap * sizeof(int));
+                    n->data.on_branch.labels = fb_realloc(n->data.on_branch.labels, lcap * 42);
+                    n->data.on_branch.linenos = fb_realloc(n->data.on_branch.linenos, lcap * sizeof(int));
                 }
                 int li = n->data.on_branch.label_count++;
                 n->data.on_branch.linenos[li] = -1;
@@ -2261,7 +2262,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_RESUME: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_RESUME;
             n->line = line2;
             n->data.resume.resume_type = 0;
@@ -2284,7 +2285,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_ERROR: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_ERROR_STMT;
             n->line = line2;
             n->data.error_stmt.code = parse_expression(p);
@@ -2302,7 +2303,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_SHELL: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_SHELL;
             n->line = line2;
             n->data.single_arg.arg = NULL;
@@ -2323,7 +2324,7 @@ static ASTNode* parse_statement(Parser* p) {
                 default: kind2 = AST_REM; break;
             }
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = kind2;
             n->line = line2;
             n->data.single_arg.arg = parse_expression(p);
@@ -2333,7 +2334,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_SLEEP: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_SLEEP;
             n->line = line2;
             n->data.sleep_stmt.seconds = NULL;
@@ -2346,7 +2347,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_RANDOMIZE: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_RANDOMIZE;
             n->line = line2;
             n->data.randomize.seed = NULL;
@@ -2363,7 +2364,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_SOUND: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_SOUND;
             n->line = line2;
             n->data.sound.freq = parse_expression(p);
@@ -2375,7 +2376,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_PLAY: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_PLAY;
             n->line = line2;
             n->data.draw_play.cmd_string = parse_expression(p);
@@ -2385,7 +2386,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_DRAW: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_DRAW;
             n->line = line2;
             n->data.draw_play.cmd_string = parse_expression(p);
@@ -2395,7 +2396,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_SCREEN: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_SCREEN;
             n->line = line2;
             n->data.screen.mode = parse_expression(p);
@@ -2419,7 +2420,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_PALETTE: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_PALETTE;
             n->line = line2;
             n->data.palette.attr = NULL;
@@ -2437,7 +2438,7 @@ static ASTNode* parse_statement(Parser* p) {
             advance(p);
             if (at(p, TOK_KW_PRINT)) {
                 advance(p);
-                ASTNode* n = calloc(1, sizeof(ASTNode));
+                ASTNode* n = fb_calloc(1, sizeof(ASTNode));
                 n->kind = AST_VIEW_PRINT;
                 n->line = line2;
                 n->data.view_print.top = NULL;
@@ -2457,7 +2458,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_WIDTH: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_WIDTH_STMT;
             n->line = line2;
             n->data.width_stmt.cols = NULL;
@@ -2474,7 +2475,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_SHARED: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_SHARED_STMT;
             n->line = line2;
             int cap2 = 0;
@@ -2493,8 +2494,8 @@ static ASTNode* parse_statement(Parser* p) {
                 int nc = n->data.shared_stmt.name_count;
                 if (nc >= cap2) {
                     cap2 = cap2 ? cap2 * 2 : 4;
-                    n->data.shared_stmt.names = realloc(n->data.shared_stmt.names, cap2 * 42);
-                    n->data.shared_stmt.types = realloc(n->data.shared_stmt.types, cap2 * sizeof(FBType));
+                    n->data.shared_stmt.names = fb_realloc(n->data.shared_stmt.names, cap2 * 42);
+                    n->data.shared_stmt.types = fb_realloc(n->data.shared_stmt.types, cap2 * sizeof(FBType));
                 }
                 strncpy(n->data.shared_stmt.names[nc], nt2->value.str.text, 41);
                 n->data.shared_stmt.types[nc] = vtype;
@@ -2506,7 +2507,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_STATIC: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_STATIC_STMT;
             n->line = line2;
             int cap2 = 0;
@@ -2525,8 +2526,8 @@ static ASTNode* parse_statement(Parser* p) {
                 int nc = n->data.shared_stmt.name_count;
                 if (nc >= cap2) {
                     cap2 = cap2 ? cap2 * 2 : 4;
-                    n->data.shared_stmt.names = realloc(n->data.shared_stmt.names, cap2 * 42);
-                    n->data.shared_stmt.types = realloc(n->data.shared_stmt.types, cap2 * sizeof(FBType));
+                    n->data.shared_stmt.names = fb_realloc(n->data.shared_stmt.names, cap2 * 42);
+                    n->data.shared_stmt.types = fb_realloc(n->data.shared_stmt.types, cap2 * sizeof(FBType));
                 }
                 strncpy(n->data.shared_stmt.names[nc], nt2->value.str.text, 41);
                 n->data.shared_stmt.types[nc] = vtype;
@@ -2542,7 +2543,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_POKE: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_POKE;
             n->line = line2;
             n->data.poke_out.addr = parse_expression(p);
@@ -2571,7 +2572,7 @@ static ASTNode* parse_statement(Parser* p) {
                 }
                 advance(p);
                 /* Parse DEF FN as a simple function */
-                ASTNode* n = calloc(1, sizeof(ASTNode));
+                ASTNode* n = fb_calloc(1, sizeof(ASTNode));
                 n->kind = AST_DEF_FN;
                 n->line = line2;
                 strncpy(n->data.def_fn.name, fname->value.str.text, 41);
@@ -2590,7 +2591,7 @@ static ASTNode* parse_statement(Parser* p) {
                             advance(p);
                             if (n->data.def_fn.param_count >= pcap) {
                                 pcap = pcap ? pcap * 2 : 4;
-                                n->data.def_fn.params = realloc(n->data.def_fn.params,
+                                n->data.def_fn.params = fb_realloc(n->data.def_fn.params,
                                     pcap * sizeof(n->data.def_fn.params[0]));
                             }
                             int pi = n->data.def_fn.param_count++;
@@ -2615,7 +2616,7 @@ static ASTNode* parse_statement(Parser* p) {
             advance(p);
             int is_shared = 0;
             if (match(p, TOK_KW_SHARED)) is_shared = 1;
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_COMMON;
             n->line = line2;
             n->data.common.is_shared = is_shared;
@@ -2631,9 +2632,9 @@ static ASTNode* parse_statement(Parser* p) {
                 int nc = n->data.common.name_count;
                 if (nc >= cap2) {
                     cap2 = cap2 ? cap2 * 2 : 4;
-                    n->data.common.names = realloc(n->data.common.names, cap2 * 42);
-                    n->data.common.types = realloc(n->data.common.types, cap2 * sizeof(FBType));
-                    n->data.common.is_array = realloc(n->data.common.is_array, cap2 * sizeof(int));
+                    n->data.common.names = fb_realloc(n->data.common.names, cap2 * 42);
+                    n->data.common.types = fb_realloc(n->data.common.types, cap2 * sizeof(FBType));
+                    n->data.common.is_array = fb_realloc(n->data.common.is_array, cap2 * sizeof(int));
                 }
                 strncpy(n->data.common.names[nc], nt2->value.str.text, 41);
                 n->data.common.types[nc] = type_from_ident_token(nt2->kind);
@@ -2651,7 +2652,7 @@ static ASTNode* parse_statement(Parser* p) {
             int line2 = t->line;
             advance(p);
             /* If used as statement: ENVIRON expr */
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_ENVIRON_STMT;
             n->line = line2;
             n->data.environ_stmt.expr = parse_expression(p);
@@ -2661,7 +2662,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_NAME: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_NAME_STMT;
             n->line = line2;
             n->data.name_stmt.old_name = parse_expression(p);
@@ -2673,7 +2674,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_FILES: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_FILES_STMT;
             n->line = line2;
             n->data.files.pattern = NULL;
@@ -2695,7 +2696,7 @@ static ASTNode* parse_statement(Parser* p) {
                 if (match(p, TOK_KW_ON)) action = 1;
                 else if (match(p, TOK_KW_OFF)) action = 0;
                 else if (match(p, TOK_KW_STOP)) action = 2;
-                ASTNode* n = calloc(1, sizeof(ASTNode));
+                ASTNode* n = fb_calloc(1, sizeof(ASTNode));
                 n->kind = AST_KEY_CTRL;
                 n->line = line2;
                 n->data.event_ctrl.key_id = (int)fbval_to_long(&ke->data.literal.value);
@@ -2716,7 +2717,7 @@ static ASTNode* parse_statement(Parser* p) {
             if (match(p, TOK_KW_ON)) action = 1;
             else if (match(p, TOK_KW_OFF)) action = 0;
             else if (match(p, TOK_KW_STOP)) action = 2;
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_TIMER_CTRL;
             n->line = line2;
             n->data.event_ctrl.key_id = 0;
@@ -2728,7 +2729,7 @@ static ASTNode* parse_statement(Parser* p) {
             int line2 = t->line;
             ASTKind kind2 = (t->kind == TOK_KW_LSET) ? AST_LSET : AST_RSET;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = kind2;
             n->line = line2;
             n->data.lrset.target = parse_lvalue(p);
@@ -2743,7 +2744,7 @@ static ASTNode* parse_statement(Parser* p) {
             match(p, TOK_HASH);
             ASTNode* fnum_expr = parse_expression(p);
             expect(p, TOK_COMMA);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_FIELD_STMT;
             n->line = line2;
             n->data.field.filenum = fnum_expr;
@@ -2761,7 +2762,7 @@ static ASTNode* parse_statement(Parser* p) {
                 advance(p);
                 if (n->data.field.field_count >= cap2) {
                     cap2 = cap2 ? cap2 * 2 : 4;
-                    n->data.field.fields = realloc(n->data.field.fields,
+                    n->data.field.fields = fb_realloc(n->data.field.fields,
                         cap2 * sizeof(n->data.field.fields[0]));
                 }
                 int fi = n->data.field.field_count++;
@@ -2779,7 +2780,7 @@ static ASTNode* parse_statement(Parser* p) {
             /* File: GET #n, recnum, var */
             if (at(p, TOK_HASH)) {
                 advance(p);
-                ASTNode* n = calloc(1, sizeof(ASTNode));
+                ASTNode* n = fb_calloc(1, sizeof(ASTNode));
                 n->kind = is_put ? AST_PUT_FILE : AST_GET_FILE;
                 n->line = line2;
                 n->data.file_io.filenum = parse_expression(p);
@@ -2803,7 +2804,7 @@ static ASTNode* parse_statement(Parser* p) {
             int line2 = t->line;
             advance(p);
             match(p, TOK_HASH);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_SEEK_STMT;
             n->line = line2;
             n->data.seek.filenum = parse_expression(p);
@@ -2817,7 +2818,7 @@ static ASTNode* parse_statement(Parser* p) {
             ASTKind kind2 = (t->kind == TOK_KW_LOCK) ? AST_LOCK_STMT : AST_UNLOCK_STMT;
             advance(p);
             match(p, TOK_HASH);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = kind2;
             n->line = line2;
             n->data.lock.filenum = parse_expression(p);
@@ -2835,7 +2836,7 @@ static ASTNode* parse_statement(Parser* p) {
         case TOK_KW_RUN: {
             int line2 = t->line;
             advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_RUN;
             n->line = line2;
             n->data.run.arg = NULL;
@@ -2850,7 +2851,7 @@ static ASTNode* parse_statement(Parser* p) {
             advance(p);
             int merge = 0;
             if (match(p, TOK_KW_MERGE) || 0) merge = 1;
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_CHAIN;
             n->line = line2;
             n->data.chain.filename = parse_expression(p);
@@ -2892,7 +2893,7 @@ static ASTNode* parse_statement(Parser* p) {
             p->pos = save_pos;
 
             const Token* sub_name = advance(p);
-            ASTNode* n = calloc(1, sizeof(ASTNode));
+            ASTNode* n = fb_calloc(1, sizeof(ASTNode));
             n->kind = AST_CALL;
             n->line = t->line;
             strncpy(n->data.call.name, sub_name->value.str.text,
@@ -2906,7 +2907,7 @@ static ASTNode* parse_statement(Parser* p) {
                     ASTNode* arg = parse_expression(p);
                     if (n->data.call.arg_count >= cap2) {
                         cap2 = cap2 ? cap2 * 2 : 4;
-                        n->data.call.args = realloc(n->data.call.args,
+                        n->data.call.args = fb_realloc(n->data.call.args,
                             cap2 * sizeof(ASTNode*));
                     }
                     n->data.call.args[n->data.call.arg_count++] = arg;
@@ -2923,7 +2924,7 @@ static ASTNode* parse_statement(Parser* p) {
 
 /* Helper to allocate a simple node */
 static ASTNode* ast_alloc_helper(ASTKind kind, int line) {
-    ASTNode* n = calloc(1, sizeof(ASTNode));
+    ASTNode* n = fb_calloc(1, sizeof(ASTNode));
     n->kind = kind;
     n->line = line;
     return n;
@@ -2956,7 +2957,7 @@ int parser_parse(const Token* tokens, int token_count, Program* prog) {
                 for (int i = 0; i < stmt->data.data.value_count; i++) {
                     if (prog->data_count >= prog->data_cap) {
                         prog->data_cap = prog->data_cap ? prog->data_cap * 2 : 32;
-                        prog->data_pool = realloc(prog->data_pool,
+                        prog->data_pool = fb_realloc(prog->data_pool,
                             prog->data_cap * sizeof(FBValue));
                     }
                     prog->data_pool[prog->data_count++] = fbval_copy(&stmt->data.data.values[i]);
@@ -2967,7 +2968,7 @@ int parser_parse(const Token* tokens, int token_count, Program* prog) {
             if (stmt->kind == AST_SUB_DEF || stmt->kind == AST_FUNCTION_DEF) {
                 if (prog->proc_count >= prog->proc_cap) {
                     prog->proc_cap = prog->proc_cap ? prog->proc_cap * 2 : 8;
-                    prog->procedures = realloc(prog->procedures,
+                    prog->procedures = fb_realloc(prog->procedures,
                         prog->proc_cap * sizeof(prog->procedures[0]));
                 }
                 int pi = prog->proc_count++;
@@ -2978,7 +2979,7 @@ int parser_parse(const Token* tokens, int token_count, Program* prog) {
 
             if (prog->stmt_count >= prog->stmt_cap) {
                 prog->stmt_cap = prog->stmt_cap ? prog->stmt_cap * 2 : 64;
-                prog->statements = realloc(prog->statements,
+                prog->statements = fb_realloc(prog->statements,
                     prog->stmt_cap * sizeof(ASTNode*));
             }
             prog->statements[prog->stmt_count++] = stmt;
@@ -2994,14 +2995,14 @@ int parser_parse(const Token* tokens, int token_count, Program* prog) {
 void program_free(Program* prog) {
     for (int i = 0; i < prog->stmt_count; i++)
         ast_free(prog->statements[i]);
-    free(prog->statements);
-    free(prog->labels);
-    free(prog->line_map);
+    fb_free(prog->statements);
+    fb_free(prog->labels);
+    fb_free(prog->line_map);
     for (int i = 0; i < prog->data_count; i++)
         fbval_release(&prog->data_pool[i]);
-    free(prog->data_pool);
-    free(prog->data_labels);
-    free(prog->procedures);
+    fb_free(prog->data_pool);
+    fb_free(prog->data_labels);
+    fb_free(prog->procedures);
 }
 
 int program_find_label(const Program* prog, const char* name) {

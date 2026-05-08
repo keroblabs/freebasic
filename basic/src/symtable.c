@@ -2,6 +2,7 @@
  * symtable.c — Symbol table with scope chaining
  */
 #include "symtable.h"
+#include "system_api.h"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -16,7 +17,7 @@ static uint32_t sym_hash(const char* name) {
 }
 
 Scope* scope_new(Scope* parent) {
-    Scope* scope = calloc(1, sizeof(Scope));
+    Scope* scope = fb_calloc(1, sizeof(Scope));
     scope->parent = parent;
     /* FB default: all letters map to SINGLE */
     for (int i = 0; i < 26; i++) {
@@ -36,11 +37,11 @@ void scope_free(Scope* scope) {
         while (sym) {
             Symbol* next = sym->next;
             fbval_release(&sym->value);
-            free(sym);
+            fb_free(sym);
             sym = next;
         }
     }
-    free(scope);
+    fb_free(scope);
 }
 
 void scope_clear(Scope* scope) {
@@ -50,7 +51,7 @@ void scope_clear(Scope* scope) {
         while (sym) {
             Symbol* next = sym->next;
             fbval_release(&sym->value);
-            free(sym);
+            fb_free(sym);
             sym = next;
         }
         scope->buckets[i] = NULL;
@@ -82,7 +83,7 @@ Symbol* scope_insert(Scope* scope, const char* name, SymKind kind, FBType type) 
     if (scope_lookup_local(scope, name))
         return NULL;
 
-    Symbol* sym = calloc(1, sizeof(Symbol));
+    Symbol* sym = fb_calloc(1, sizeof(Symbol));
     strncpy(sym->name, name, sizeof(sym->name) - 1);
     sym->kind = kind;
     sym->type = type;

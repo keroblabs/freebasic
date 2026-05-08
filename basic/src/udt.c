@@ -2,6 +2,7 @@
  * udt.c — User-Defined Type registry and instance management
  */
 #include "udt.h"
+#include "system_api.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -84,7 +85,7 @@ int udt_find_field(const UDTRegistry* reg, int type_id, const char* name) {
 FBValue* udt_alloc_instance(const UDTRegistry* reg, int type_id) {
     if (type_id < 0 || type_id >= reg->type_count) return NULL;
     const UDTDef* def = &reg->types[type_id];
-    FBValue* fields = calloc(def->field_count, sizeof(FBValue));
+    FBValue* fields = fb_calloc(def->field_count, sizeof(FBValue));
 
     for (int i = 0; i < def->field_count; i++) {
         switch (def->fields[i].type) {
@@ -96,11 +97,11 @@ FBValue* udt_alloc_instance(const UDTRegistry* reg, int type_id) {
                 if (def->fields[i].is_fixed_str) {
                     /* Space-padded fixed string */
                     int len = def->fields[i].fixed_str_len;
-                    char* buf = malloc(len + 1);
+                    char* buf = fb_malloc(len + 1);
                     memset(buf, ' ', len);
                     buf[len] = '\0';
                     FBString* s = fbstr_new(buf, len);
-                    free(buf);
+                    fb_free(buf);
                     fields[i] = fbval_string(s);
                 } else {
                     fields[i] = fbval_string_from_cstr("");
@@ -120,5 +121,5 @@ void udt_free_instance(FBValue* fields, const UDTRegistry* reg, int type_id) {
     for (int i = 0; i < def->field_count; i++) {
         fbval_release(&fields[i]);
     }
-    free(fields);
+    fb_free(fields);
 }

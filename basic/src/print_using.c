@@ -7,6 +7,7 @@
  *   Escape:   _ (literal next char)
  */
 #include "print_using.h"
+#include "system_api.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -232,7 +233,7 @@ static char* format_string_val(int width, const char* str_value) {
     }
 
     /* Fixed width: left-justify, pad with spaces */
-    char* buf = malloc(width + 1);
+    char* buf = fb_malloc(width + 1);
     int i;
     for (i = 0; i < width && i < slen; i++) buf[i] = str_value[i];
     for (; i < width; i++) buf[i] = ' ';
@@ -276,7 +277,7 @@ void exec_print_using(const char* fmt, FBValue* values, int value_count) {
                     char* result = format_number(bd, ad, hd, hc,
                                                  ps, pe, me, dl, sf, ex, num);
                     fputs(result, stdout);
-                    free(result);
+                    fb_free(result);
                     vi++;
                 }
                 fpos += nlen;
@@ -293,7 +294,7 @@ void exec_print_using(const char* fmt, FBValue* values, int value_count) {
                         sv = values[vi].as.str->data;
                     char* result = format_string_val(sw, sv);
                     fputs(result, stdout);
-                    free(result);
+                    fb_free(result);
                     vi++;
                 }
                 fpos += slen;
@@ -331,17 +332,17 @@ char* format_print_using(const char* fmt, FBValue* values, int value_count) {
 
     /* Dynamic buffer */
     int cap = 256, len = 0;
-    char* buf = malloc(cap);
+    char* buf = fb_malloc(cap);
     buf[0] = '\0';
 
 #define BUF_APPEND(s) do { \
     int _sl = (int)strlen(s); \
-    while (len + _sl + 1 > cap) { cap *= 2; buf = realloc(buf, cap); } \
+    while (len + _sl + 1 > cap) { cap *= 2; buf = fb_realloc(buf, cap); } \
     memcpy(buf + len, s, _sl); len += _sl; buf[len] = '\0'; \
 } while(0)
 
 #define BUF_PUTCHAR(c) do { \
-    if (len + 2 > cap) { cap *= 2; buf = realloc(buf, cap); } \
+    if (len + 2 > cap) { cap *= 2; buf = fb_realloc(buf, cap); } \
     buf[len++] = (c); buf[len] = '\0'; \
 } while(0)
 
@@ -365,7 +366,7 @@ char* format_print_using(const char* fmt, FBValue* values, int value_count) {
                     char* result = format_number(bd, ad, hd, hc,
                                                  ps, pe, me, dl, sf, ex, num);
                     BUF_APPEND(result);
-                    free(result);
+                    fb_free(result);
                     vi++;
                 }
                 fpos += nlen;
@@ -381,7 +382,7 @@ char* format_print_using(const char* fmt, FBValue* values, int value_count) {
                         sv = values[vi].as.str->data;
                     char* result = format_string_val(sw, sv);
                     BUF_APPEND(result);
-                    free(result);
+                    fb_free(result);
                     vi++;
                 }
                 fpos += slen;

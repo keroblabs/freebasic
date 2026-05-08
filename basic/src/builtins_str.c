@@ -2,6 +2,7 @@
  * builtins_str.c — String built-in functions for FBasic interpreter
  */
 #include "builtins_str.h"
+#include "system_api.h"
 #include "error.h"
 #include "value.h"
 #include <string.h>
@@ -120,7 +121,7 @@ static FBValue fn_str(FBValue* args, int argc, int line) {
     int len = (int)strlen(fmt);
     if (len > 0 && fmt[len - 1] == ' ') fmt[len - 1] = '\0';
     FBValue result = fbval_string_from_cstr(fmt);
-    free(fmt);
+    fb_free(fmt);
     return result;
 }
 
@@ -200,11 +201,11 @@ static FBValue fn_string_fill(FBValue* args, int argc, int line) {
     } else {
         fill_char = (char)fbval_to_long(&args[1]);
     }
-    char* buf = malloc(n + 1);
+    char* buf = fb_malloc(n + 1);
     memset(buf, fill_char, n);
     buf[n] = '\0';
     FBString* s = fbstr_new(buf, n);
-    free(buf);
+    fb_free(buf);
     FBValue val;
     val.type = FB_STRING;
     val.as.str = s;
@@ -215,11 +216,11 @@ static FBValue fn_space(FBValue* args, int argc, int line) {
     (void)argc;
     int n = (int)fbval_to_long(&args[0]);
     if (n < 0) fb_error(FB_ERR_ILLEGAL_FUNC_CALL, line, "SPACE$");
-    char* buf = malloc(n + 1);
+    char* buf = fb_malloc(n + 1);
     memset(buf, ' ', n);
     buf[n] = '\0';
     FBString* s = fbstr_new(buf, n);
-    free(buf);
+    fb_free(buf);
     FBValue val;
     val.type = FB_STRING;
     val.as.str = s;
